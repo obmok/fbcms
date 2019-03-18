@@ -5,10 +5,15 @@ import App from './App';
 import * as serviceWorker from './serviceWorker';
 import {Provider} from 'react-redux';
 import store from './redux/store';
+import { ConnectedRouter } from 'connected-react-router'
+import history from './history'
+
 
 ReactDOM.render(
   <Provider store={store}>
-    <App />
+    <ConnectedRouter history={history}>
+      <App />
+    </ConnectedRouter>
   </Provider>, document.getElementById('root'));
 
 // If you want your app to work offline and load faster, you can change
