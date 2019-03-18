@@ -7,6 +7,7 @@ import {Provider} from 'react-redux';
 import store from './redux/store';
 import { ConnectedRouter } from 'connected-react-router'
 import history from './history'
+import './config'
 
 
 ReactDOM.render(
