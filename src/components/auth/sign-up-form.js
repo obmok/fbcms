@@ -11,12 +11,12 @@ class SignUpForm extends Component {
     render() {
         const { handleSubmit } = this.props
         return (
-            <div>
+            <div className='form'>
                 <h3>Sign Up</h3>
                 <form onSubmit={handleSubmit}>
-                    <Field name='email' label = 'Email:' component={ErrorField} />
-                    <Field name='password' label = 'Password:' component={ErrorField} type='password'/>
-                    <button >Sign Up</button>
+                    <Field name='email' className='field' label = 'Email:' component={ErrorField} />
+                    <Field name='password' className='field' label = 'Password:' component={ErrorField} type='password'/>
+                    <button className='control'>Sign Up</button>
                 </form>
             </div>
         )

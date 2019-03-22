@@ -6,9 +6,13 @@ import {
   all,
   takeEvery,
   fork,
-  take
+  cancel,
+  cancelled,
+  race,
+  delay,
+  take,
+  eventChannel
 } from 'redux-saga/effects'
-import { eventChannel } from 'redux-saga'
 import { reset } from 'redux-form'
 import { createSelector } from 'reselect'
 import { fbToEntities } from '../services/util'
@@ -24,7 +28,6 @@ export const ADD_PERSON_START = `${prefix}/ADD_PERSON_START`
 export const ADD_PERSON_SUCCESS = `${prefix}/ADD_PERSON_SUCCESS`
 
 export const FETCH_ALL_REQUEST = `${prefix}/FETCH_ALL_REQUEST`
-export const FETCH_ALL_START = `${prefix}/FETCH_ALL_START`
 export const FETCH_ALL_SUCCESS = `${prefix}/FETCH_ALL_SUCCESS`
 export const REALTIME_FETCH_ALL_SUCCESS = `${prefix}/REALTIME_FETCH_ALL_SUCCESS`
 
@@ -35,8 +38,7 @@ export const DELETE_PERSON_SUCCESS = `${prefix}/DELETE_PERSON_SUCCESS`
  * Reducer
  * */
 const ReducerState = Record({
-  entities: new OrderedMap({}),
-  loading: false
+  entities: new OrderedMap({})
 })
 
 const PersonRecord = Record({
@@ -53,12 +55,9 @@ export default function reducer(state = new ReducerState(), action) {
     case ADD_PERSON_SUCCESS:
       return state.setIn(['entities', payload.id], new PersonRecord(payload))
 
-    case FETCH_ALL_START:
-      return state.set('loading', true)
-
-    case REALTIME_FETCH_ALL_SUCCESS:
     case FETCH_ALL_SUCCESS:
-      return state.set('entities', fbToEntities(payload, PersonRecord)).set('loading', false)
+    case REALTIME_FETCH_ALL_SUCCESS:
+      return state.set('entities', fbToEntities(payload, PersonRecord))
 
     case DELETE_PERSON_SUCCESS:
       return state.deleteIn(['entities', payload.id])
@@ -77,13 +76,6 @@ export const peopleSelector = createSelector(
   (state) => state.entities.valueSeq().toArray()
 )
 export const idSelector = (_, props) => props.id
-
-export const loadingSelector = createSelector(
-  stateSelector,
-  (state) => state.loading
-)
-
-//export const loadingSelector = (state) => state.loading
 
 export const personSelector = createSelector(
   stateSelector,
@@ -125,8 +117,7 @@ export function* addPersonSaga(action) {
     payload: { ...action.payload.person }
   })
 
-  const resp = yield call(api.addPerson, action.payload.person)
-  const key = resp ? resp.key : undefined
+  const { key } = yield call(api.addPerson, action.payload.person)
 
   yield put({
     type: ADD_PERSON_SUCCESS,
@@ -137,24 +128,44 @@ export function* addPersonSaga(action) {
 }
 
 export function* fetchAllSaga() {
-  yield put({
-    type: FETCH_ALL_START
-  })
+  try {
+    const data = yield call(api.loadAllPeople)
 
-  const data = yield call(api.loadAllPeople)
-
-  yield put({
-    type: FETCH_ALL_SUCCESS,
-    payload: data
-  })
+    yield put({
+      type: FETCH_ALL_SUCCESS,
+      payload: data
+    })
+  } catch (_) {}
 }
 
 export function* deletePersonSaga({ payload }) {
-  yield call(api.deletePerson, payload.id)
+  try {
+    yield call(api.deletePerson, payload.id)
 
-  yield put({
-    type: DELETE_PERSON_SUCCESS,
-    payload
+    yield put({
+      type: DELETE_PERSON_SUCCESS,
+      payload
+    })
+  } catch (_) {}
+}
+
+export function* syncPeopleWithPolling() {
+  try {
+    while (true) {
+      yield fork(fetchAllSaga)
+      yield delay(2000)
+    }
+  } finally {
+    if (yield call(cancelled)) {
+      console.log('---', 'cancelled')
+    }
+  }
+}
+
+export function* cancellableSyncSaga() {
+  yield race({
+    sync: syncPeopleWithPolling(),
+    timeout: delay(5000)
   })
 }
 
@@ -162,10 +173,6 @@ export const createPeopleChanel = () =>
   eventChannel((emit) => api.peopleSubscription((data) => emit({ data })))
 
 export function* realtimePeopleSyncSaga() {
-  yield put({
-    type: FETCH_ALL_START
-  })
-  
   const chanel = yield call(createPeopleChanel)
 
   while (true) {
@@ -177,6 +184,7 @@ export function* realtimePeopleSyncSaga() {
     })
   }
 }
+
 
 export function* saga() {
   yield fork(realtimePeopleSyncSaga)

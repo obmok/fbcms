@@ -5,12 +5,12 @@ import NewPersonForm from '../people/new-person-form'
 import PeopleList from '../people/people-list'
 
 class PersonPage extends Component {
-  static propTypes = {}
+  //static propTypes = {}
 
   render() {
     return (
       <div>
-        <h2>Add new person</h2>
+        <h2>People list</h2>
         <PeopleList />
         <NewPersonForm onSubmit={this.props.addPerson} />
       </div>

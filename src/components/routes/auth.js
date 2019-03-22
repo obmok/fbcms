@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import PropTypes from 'prop-types'
+//import PropTypes from 'prop-types'
 import SignInForm from '../auth/sign-in-form'
 import {Route} from 'react-router-dom'
 import SignUpForm from '../auth/sign-up-form'
@@ -7,9 +7,9 @@ import {connect} from 'react-redux'
 import {signIn, signUp} from '../../ducks/auth'
 
 class AuthPage extends Component {
-  static propTypes = {
+  /*static propTypes = {
 
-  }
+  }*/
 
   render() {
     return (
@@ -25,4 +25,4 @@ class AuthPage extends Component {
   handleSignUp = ({ email, password }) => this.props.signUp(email, password)
 }
 
-export default connect(null, { signIn, signUp })(AuthPage)
+export default connect(null, { signIn, signUp})(AuthPage)

@@ -8,11 +8,12 @@ class NewPersonForm extends Component {
 
   render() {
     return (
-      <div>
+      <div className='form'>
+        <h3>New User Form</h3>
         <form onSubmit={this.props.handleSubmit}>
-          <Field name="firstName" label="first name" component={ErrorField} />
-          <Field name="lastName" label="last name" component={ErrorField} />
-          <Field name="email" label="email" component={ErrorField} />
+          <Field className='field' name="firstName" label="First name" component={ErrorField} />
+          <Field className='field' name="lastName" label="Last name" component={ErrorField} />
+          <Field className='field' name="email" label="Email" component={ErrorField} />
           <div>
             <input type="submit" />
           </div>
